@@ -291,14 +291,13 @@ def show_venue(venue_id):
   upcoming_shows = []
   old_shows = []
   new_shows = []
-  print('all shows', all_shows)
 
   for all_show in all_shows:
     if str(all_show.start_time) < current_time:
       old_shows = all_show
       print('old_shows', old_shows)
       for show in old_shows:
-        artist = Artist.query.get(all_show.artist_id).all()
+        artist = Artist.query.get(all_show.artist_id)
         show_data = {
           'artist_id': artist.id,
           'artist_name': artist.name,
@@ -307,17 +306,17 @@ def show_venue(venue_id):
         }
       past_shows.append(show_data)
     else:
+      new_shows = all_shows
+      print('New shows', new_shows)
       for show in new_shows:
-        new_shows = shows
-        print('New shows', new_shows)
-        for show in new_shows:
-          show_data = {
-            'artist_id': artist.id,
-            'artist_name': artist.name,
-            'artist_image_link': artist.image_link,
-            'start_time': str(show.start_time)
-          }
-        upcoming_shows.append(show_data)
+        artist = Artist.query.get(all_show.artist_id)
+        show_data = {
+          'artist_id': artist.id,
+          'artist_name': artist.name,
+          'artist_image_link': artist.image_link,
+          'start_time': str(show.start_time)
+        }
+      upcoming_shows.append(show_data)
           
 
   venue_data={
@@ -387,12 +386,13 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>/delete', methods=['DELETE'])
+@app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
   try:
-    Venue.query.filter(id=venue_id).delete()
+    delete_venue = Venue.query.filter(id=venue_id)
+    db.session.delete(delete_venue)
     db.session.commit()
     flash('Venue was deleted successfully')
   except Exception:
@@ -726,7 +726,9 @@ def create_artist_submission():
     seeking_description = request.form.get('seeking_description')
 
     # TODO: modify data to be the data object returned from db insertion
-    artist = Artist(name=name, city=city, state=state, phone=phone, genres=genres, facebook_link=facebook_link, image_link=image_link, website_link=website_link, seeking_venue=seeking_venue, seeking_description=seeking_description)
+    artist = Artist(name=name, city=city, state=state, phone=phone, genres=genres,
+     facebook_link=facebook_link, image_link=image_link, website_link=website_link, 
+     seeking_venue=seeking_venue, seeking_description=seeking_description)
     db.session.add(artist)
     db.session.commit()
   except Exception:
