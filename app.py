@@ -387,7 +387,7 @@ def search_artists():
 def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
-  venue = Venue.query.get(artist_id)
+  artist = Artist.query.get(artist_id)
   all_shows = db.session.query(Show).filter_by(artist_id = artist_id).all()
   current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
   past_shows = []
@@ -400,7 +400,7 @@ def show_artist(artist_id):
       old_shows = all_show
       print('old_shows', old_shows)
       for show in old_shows:
-        artist = Artist.query.get(all_show.artist_id)
+        venue = Venue.query.get(all_show.venue_id)
         show_data = {
           'venue_id': venue.id,
           'venue_name': venue.name,
@@ -412,7 +412,7 @@ def show_artist(artist_id):
       new_shows = all_shows
       print('New shows', new_shows)
       for show in new_shows:
-        artist = Artist.query.get(all_show.artist_id)
+        venue = Venue.query.get(all_show.venue_id)
         show_data = {
           'venue_id': venue.id,
           'venue_name': venue.name,
