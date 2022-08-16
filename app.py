@@ -29,8 +29,6 @@ migrate = Migrate(app, db)
 
 # TODO: connect to a local postgresql database
 
-
-
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -225,39 +223,28 @@ def show_venue(venue_id):
     "upcoming_shows_count": 1,
   }
   venue = Venue.query.get(venue_id)
-  all_shows = db.session.query(Show).filter_by(venue_id = venue_id).all()
   current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  past_shows_query = db.session.query(Show).join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time<current_time).all()   
   past_shows = []
-  upcoming_shows = []
-  old_shows = []
-  new_shows = []
+  for show in past_shows_query:
+    artist = Artist.query.get(show.artist_id)
+    past_shows.append({
+          'artist_id': artist.id,
+          'artist_name': artist.name,
+          'artist_image_link': artist.image_link,
+          'start_time': artist.start_time
+        })
 
-  for all_show in all_shows:
-    if str(all_show.start_time) < current_time:
-      old_shows = all_show
-      print('old_shows', old_shows)
-      for show in old_shows:
-        artist = Artist.query.get(all_show.artist_id)
-        show_data = {
+  upcoming_shows_query = db.session.query(Show).join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time>current_time).all()   
+  upcoming_shows = []
+  for show in upcoming_shows_query:
+    artist = Artist.query.get(show.artist_id)
+    upcoming_shows.append({
           'artist_id': artist.id,
           'artist_name': artist.name,
           'artist_image_link': artist.image_link,
-          'start_time': str(show.start_time)
-        }
-      past_shows.append(show_data)
-    else:
-      new_shows = all_shows
-      print('New shows', new_shows)
-      for show in new_shows:
-        artist = Artist.query.get(all_show.artist_id)
-        show_data = {
-          'artist_id': artist.id,
-          'artist_name': artist.name,
-          'artist_image_link': artist.image_link,
-          'start_time': str(show.start_time)
-        }
-      upcoming_shows.append(show_data)
-          
+          'start_time': show.start_time
+        })
 
   venue_data={
     "id": venue_id,
@@ -276,7 +263,7 @@ def show_venue(venue_id):
     "past_shows_count": len(past_shows),
     "upcoming_shows_count": len(upcoming_shows),
   }
-
+ 
   #data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=venue_data)
 
@@ -298,7 +285,7 @@ def create_venue_submission():
     state = request.form.get('state')
     address = request.form.get('address')
     phone = request.form.get('phone')
-    genres = request.form.get('genres')
+    genres = request.form.getlist('genres')
     facebook_link = request.form.get('facebook_link')
     image_link = request.form.get('image_link')
     website_link = request.form.get('website_link')
@@ -306,7 +293,10 @@ def create_venue_submission():
     seeking_description = request.form.get('seeking_description')
 
     # TODO: modify data to be the data object returned from db insertion
-    venue = Venue(name=name, city=city, state=state, address=address, phone=phone, genres=genres, facebook_link=facebook_link, image_link=image_link, website_link=website_link, seeking_talent=seeking_talent, seeking_description=seeking_description)
+    venue = Venue(name=name, city=city, state=state, address=address, phone=phone,
+     genres=genres, facebook_link=facebook_link, image_link=image_link, 
+     website_link=website_link, seeking_talent=seeking_talent, 
+     seeking_description=seeking_description)
 
     db.session.add(venue)
     db.session.commit()
@@ -326,7 +316,7 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/<venue_id>', methods=['POST'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
@@ -388,38 +378,30 @@ def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
   artist = Artist.query.get(artist_id)
-  all_shows = db.session.query(Show).filter_by(artist_id = artist_id).all()
   current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+  past_shows_query = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time<current_time).all()   
   past_shows = []
-  upcoming_shows = []
-  old_shows = []
-  new_shows = []
+  for show in past_shows_query:
+    venue = Venue.query.get(show.venue_id)
+    past_shows.append({
+          'venue_id': venue.id,
+          'venue_name': venue.name,
+          'venue_image_link': venue.image_link,
+          'start_time': show.start_time
+        })
 
-  for all_show in all_shows:
-    if str(all_show.start_time) < current_time:
-      old_shows = all_show
-      print('old_shows', old_shows)
-      for show in old_shows:
-        venue = Venue.query.get(all_show.venue_id)
-        show_data = {
+  upcoming_shows_query = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>current_time).all()   
+  upcoming_shows = []
+  for show in upcoming_shows_query:
+    venue = Venue.query.get(show.venue_id)
+    upcoming_shows.append({
           'venue_id': venue.id,
           'venue_name': venue.name,
           'venue_image_link': venue.image_link,
-          'start_time': str(show.start_time)
-        }
-      past_shows.append(show_data)
-    else:
-      new_shows = all_shows
-      print('New shows', new_shows)
-      for show in new_shows:
-        venue = Venue.query.get(all_show.venue_id)
-        show_data = {
-          'venue_id': venue.id,
-          'venue_name': venue.name,
-          'venue_image_link': venue.image_link,
-          'start_time': str(show.start_time)
-        }
-      upcoming_shows.append(show_data)
+          'start_time': show.start_time
+        })
+
+  
 
   artist_data={
     "id": artist_id,
@@ -558,7 +540,7 @@ def edit_artist_submission(artist_id):
     artist.city = request.form.get('city')
     artist.state = request.form.get('state')
     artist.phone = request.form.get('phone')
-    artist.genres = request.form.get('genres')
+    artist.genres = request.form.getlist('genres')
     artist.facebook_link = request.form.get('facebook_link')
     artist.image_link = request.form.get('image_link')
     artist.website_link = request.form.get('website_link')
@@ -623,7 +605,7 @@ def edit_venue_submission(venue_id):
     venue.state = request.form.get('state')
     venue.phone = request.form.get('phone')
     venue.address = request.form.get('address')
-    venue.genres = request.form.get('genres')
+    venue.genres = request.form.getlist('genres')
     venue.facebook_link = request.form.get('facebook_link')
     venue.image_link = request.form.get('image_link')
     venue.website_link = request.form.get('website_link')
@@ -659,7 +641,7 @@ def create_artist_submission():
     city = request.form.get('city')
     state = request.form.get('state')
     phone = request.form.get('phone')
-    genres = request.form.get('genres')
+    genres = request.form.getlist('genres')
     facebook_link = request.form.get('facebook_link')
     image_link = request.form.get('image_link')
     website_link = request.form.get('website_link')
