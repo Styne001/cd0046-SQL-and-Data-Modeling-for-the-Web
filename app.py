@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------------#
 # Imports
 #----------------------------------------------------------------------------#
+from ast import pattern
 import sys
 from email.policy import default
 import json
@@ -16,7 +17,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 
-from models import Venue, Artist, Show
+from models import Venue, Artist, Show, db
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -24,9 +25,9 @@ from models import Venue, Artist, Show
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db = SQLAlchemy(app)
+app.config['SECRET_KEY']='fYYuRaPP'
+db.init_app(app)
 migrate = Migrate(app, db)
-
 # TODO: connect to a local postgresql database
 
 #----------------------------------------------------------------------------#
@@ -222,27 +223,26 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
+  
   venue = Venue.query.get(venue_id)
   current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-  past_shows_query = db.session.query(Show).join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time<current_time).all()   
+  past_shows_query = db.session.query(Show).join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time<current_time).all()
   past_shows = []
   for show in past_shows_query:
-    artist = Artist.query.get(show.artist_id)
     past_shows.append({
-          'artist_id': artist.id,
-          'artist_name': artist.name,
-          'artist_image_link': artist.image_link,
-          'start_time': artist.start_time
+          'artist_id': show.artist.id,
+          'artist_name': show.artist.name,
+          'artist_image_link': show.artist.image_link,
+          'start_time': show.start_time
         })
 
   upcoming_shows_query = db.session.query(Show).join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time>current_time).all()   
   upcoming_shows = []
   for show in upcoming_shows_query:
-    artist = Artist.query.get(show.artist_id)
     upcoming_shows.append({
-          'artist_id': artist.id,
-          'artist_name': artist.name,
-          'artist_image_link': artist.image_link,
+          'artist_id': show.artist.id,
+          'artist_name': show.artist.name,
+          'artist_image_link': show.artist.image_link,
           'start_time': show.start_time
         })
 
@@ -377,34 +377,33 @@ def search_artists():
 def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
+  #show = Show.query.join(Artist, Artist.id==Show.artist_id).join(Venue, Venue.id==Show.venue_id).all()
   artist = Artist.query.get(artist_id)
   current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
   past_shows_query = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time<current_time).all()   
   past_shows = []
   for show in past_shows_query:
-    venue = Venue.query.get(show.venue_id)
     past_shows.append({
-          'venue_id': venue.id,
-          'venue_name': venue.name,
-          'venue_image_link': venue.image_link,
+          'venue_id': show.venue_id,
+          'venue_name': show.venue.name,
+          'venue_image_link': show.venue.image_link,
           'start_time': show.start_time
         })
 
-  upcoming_shows_query = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>current_time).all()   
+  upcoming_shows_query = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>current_time).all()
   upcoming_shows = []
   for show in upcoming_shows_query:
-    venue = Venue.query.get(show.venue_id)
     upcoming_shows.append({
-          'venue_id': venue.id,
-          'venue_name': venue.name,
-          'venue_image_link': venue.image_link,
+          'venue_id': show.venue.id,
+          'venue_name': show.venue.name,
+          'venue_image_link': show.venue.image_link,
           'start_time': show.start_time
         })
 
   
 
   artist_data={
-    "id": artist_id,
+    "id": artist.id,
     "name": artist.name,
     "genres": artist.genres,
     "city": artist.city,
@@ -677,6 +676,21 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
+  show_data=[]
+  shows = Show.query.join(Artist, Artist.id==Show.artist_id).join(Venue, Venue.id==Show.venue_id).all()
+  for show in shows:
+    show_details={
+      "venue_id": show.venue_id,
+      "venue_name": show.venue.name,
+      "artist_id": show.artist.id,
+      "artist_name": show.artist.name,
+      "artist_image_link": show.artist.image_link,
+      "start_time": show.start_time,
+    }
+    show_data.append(show_details)
+  print(show_details)
+  print(show_data)
+  print(shows)
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -713,7 +727,7 @@ def shows():
     "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
     "start_time": "2035-04-15T20:00:00.000Z"
   }]
-  return render_template('pages/shows.html', shows=db.session.query(Show).all())
+  return render_template('pages/shows.html', shows=show_data)
 
 @app.route('/shows/create')
 def create_shows():

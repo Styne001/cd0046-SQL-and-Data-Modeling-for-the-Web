@@ -1,7 +1,9 @@
 from datetime import datetime
+from email import message
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, URL, Regexp
+from enum import Enum
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -83,7 +85,12 @@ class VenueForm(Form):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone'
+        'phone', validators=[
+           DataRequired(),
+            Regexp(regex='^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$',
+             message="Enter Valid phone number"
+            )
+        ]
     )
     image_link = StringField(
         'image_link'
@@ -114,10 +121,18 @@ class VenueForm(Form):
         ]
     )
     facebook_link = StringField(
-        'facebook_link', validators=[URL()]
+        'facebook_link', validators=[
+            URL(),
+            Regexp(regex='/^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/',
+             message="Enter Valid facebook link"
+            )]
     )
     website_link = StringField(
-        'website_link'
+        'website_link', validators=[
+            URL(),
+            Regexp(regex='/^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/',
+             message="Enter Valid website link"
+            )]
     )
 
     seeking_talent = BooleanField( 'seeking_talent' )
@@ -193,7 +208,12 @@ class ArtistForm(Form):
     )
     phone = StringField(
         # TODO implement validation logic for state
-        'phone'
+        'phone', validators=[
+            DataRequired(),
+            Regexp(regex='^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$',
+             message="Enter Valid phone number"
+            )
+        ]
     )
     image_link = StringField(
         'image_link'
@@ -224,11 +244,21 @@ class ArtistForm(Form):
      )
     facebook_link = StringField(
         # TODO implement enum restriction
-        'facebook_link', validators=[URL()]
+        'facebook_link', validators=[
+            URL(),
+            Regexp(regex='/^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/',
+             message="Enter Valid facebook link"
+            )
+        ]
      )
 
     website_link = StringField(
-        'website_link'
+        'website_link', validators=[
+            URL(), 
+            Regexp(regex='/^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/',
+             message="Enter website link"
+            )
+        ]
      )
 
     seeking_venue = BooleanField( 'seeking_venue' )
@@ -236,4 +266,5 @@ class ArtistForm(Form):
     seeking_description = StringField(
             'seeking_description'
      )
+    
 

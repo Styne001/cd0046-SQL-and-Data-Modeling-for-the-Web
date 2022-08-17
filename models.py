@@ -12,6 +12,8 @@ class Show(db.Model):
   start_time = db.Column(db.String, nullable=False)
   artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'))
   venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
+  venue = db.relationship('Venue', backref=db.backref('venue', lazy=True))
+  artist = db.relationship('Artist', backref=db.backref('artist', lazy=True))
 
   def __repr__(self):
         return f'<Show {self.id} {self.start_time}>'
@@ -26,14 +28,15 @@ class Venue(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.BIGINT, nullable=False)
+    phone = db.Column(db.String(120), nullable=False)
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.String(5))
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref=db.backref('Venue', lazy='joined', cascade='delete'))
+    shows = db.relationship('Show', backref=db.backref('Venue', lazy='joined', cascade='all, delete'))
+
 
     def __repr__(self):
         return f'<Venue {self.name} {self.city} {self.state}'
@@ -47,14 +50,14 @@ class Artist(db.Model):
     name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.BIGINT, nullable=False)
+    phone = db.Column(db.String(120), nullable=False)
     genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.String(5))
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show', backref=db.backref('Artist', lazy='joined', cascade='delete'))
+    shows = db.relationship('Show', backref=db.backref('Artist', lazy='joined', cascade='all, delete'))
 
     def __repr__(self):
         return f'<Artist {self.name} {self.city} {self.genres}'
